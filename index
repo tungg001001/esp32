@@ -3,18 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <title>ESP32 DHT11 控制</title>
+<style>
+  body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; background: #f0f0f0; }
+  h1 { color: #007acc; }
+  p { font-size: 18px; }
+  button { padding: 10px 20px; font-size: 16px; margin-top: 10px; cursor: pointer; }
+</style>
 </head>
 <body>
-<h1>ESP32 DHT11 控制</h1>
+<h1>ESP32 DHT11 控制頁面</h1>
+
 <p>溫度: <span id="temp">--</span> ℃</p>
 <p>濕度: <span id="hum">--</span> %</p>
 <button id="ledBtn">開/關 LED</button>
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwtAjS3gfASvGL1nRwmjhPmNFcRMu1LwvgBRe8485M-pwyPJHLWXiDfEbgwGWVb8SBz/exec";
+  // ← 替換成你部署後的 Web App URL
+  const GAS_URL = "https://script.google.com/macros/s/你的WebAppID/exec"; 
+
   let ledOn = false;
 
+  // 抓取資料並更新頁面
   async function fetchData(){
     try{
       const res = await fetch(GAS_URL);
@@ -24,19 +34,25 @@ document.addEventListener("DOMContentLoaded", function(){
       document.getElementById("hum").innerText  = data.hum;
       ledOn = data.led == 1;
       document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
-    } catch(e) {
-      console.error(e);
+    } catch(e){
+      console.error("抓取資料失敗", e);
     }
   }
 
+  // 切換 LED 狀態
   async function toggleLED(){
     ledOn = !ledOn;
-    await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn ? 1 : 0}`);
-    document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
+    try{
+      await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn ? 1 : 0}`);
+      document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
+    } catch(e){
+      console.error("切換 LED 失敗", e);
+    }
   }
 
   document.getElementById("ledBtn").addEventListener("click", toggleLED);
 
+  // 頁面載入抓一次資料，之後每 5 秒更新
   fetchData();
   setInterval(fetchData, 5000);
 });
