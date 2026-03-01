@@ -15,44 +15,36 @@
 
 <p>溫度: <span id="temp">--</span> ℃</p>
 <p>濕度: <span id="hum">--</span> %</p>
+<!-- 這個按鈕一定要有，id 與 JS 一致 -->
 <button id="ledBtn">開/關 LED</button>
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-  // ← 替換成你部署後的 Web App URL
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwtAjS3gfASvGL1nRwmjhPmNFcRMu1LwvgBRe8485M-pwyPJHLWXiDfEbgwGWVb8SBz/exec"; 
-
+  const GAS_URL = "https://script.google.com/macros/s/你的WebAppID/exec"; 
   let ledOn = false;
 
-  // 抓取資料並更新頁面
   async function fetchData(){
     try{
       const res = await fetch(GAS_URL);
       const data = await res.json();
-      console.log("抓到資料:", data);
       document.getElementById("temp").innerText = data.temp;
       document.getElementById("hum").innerText  = data.hum;
       ledOn = data.led == 1;
       document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
     } catch(e){
-      console.error("抓取資料失敗", e);
+      console.error(e);
     }
   }
 
-  // 切換 LED 狀態
   async function toggleLED(){
     ledOn = !ledOn;
-    try{
-      await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn ? 1 : 0}`);
-      document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
-    } catch(e){
-      console.error("切換 LED 失敗", e);
-    }
+    await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn ? 1 : 0}`);
+    document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
   }
 
+  // 綁定按鈕
   document.getElementById("ledBtn").addEventListener("click", toggleLED);
 
-  // 頁面載入抓一次資料，之後每 5 秒更新
   fetchData();
   setInterval(fetchData, 5000);
 });
