@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function(){
     try{
       const response = await fetch(GAS_URL);
       const data = await response.json();
-      console.log(data); // 確認抓到 JSON
+      console.log("抓到資料:", data); // F12 Console 可看到
       document.getElementById("temp").innerText = data.temp !== undefined ? data.temp : "--";
       document.getElementById("hum").innerText  = data.hum  !== undefined ? data.hum  : "--";
       ledOn = data.led == 1;
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function(){
   document.getElementById("ledBtn").addEventListener("click", toggleLED);
 
   fetchData();
-  setInterval(fetchData, 5000);
+  setInterval(fetchData, 5000); // 每 5 秒更新
 });
 </script>
 </body>
