@@ -2,53 +2,43 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 DHT11 & LED 控制</title>
-<style>
-  body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; }
-  h1 { color: #007ACC; }
-  p { font-size: 1.2em; }
-  button { padding: 10px 20px; font-size: 1em; margin-top: 10px; cursor: pointer; }
-</style>
+<title>ESP32 DHT11 控制</title>
 </head>
 <body>
-<h1>ESP32 DHT11 & LED 控制</h1>
+<h1>ESP32 DHT11 控制</h1>
 <p>溫度: <span id="temp">--</span> ℃</p>
 <p>濕度: <span id="hum">--</span> %</p>
 <button id="ledBtn">開/關 LED</button>
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbywAzr5hl3GYWRE9KeF0wAcCfYxKZzNXXLv9apGkngHkSCKp1mI90z8QFG9Wq_CJGyZ/exec"; // 改成你的 Web App URL
+  const GAS_URL = "https://script.google.com/macros/s/你的WebAppID/exec";
   let ledOn = false;
 
   async function fetchData(){
     try{
-      const response = await fetch(GAS_URL);
-      const data = await response.json();
-      console.log("抓到資料:", data); // F12 Console 可看到
-      document.getElementById("temp").innerText = data.temp !== undefined ? data.temp : "--";
-      document.getElementById("hum").innerText  = data.hum  !== undefined ? data.hum  : "--";
+      const res = await fetch(GAS_URL);
+      const data = await res.json();
+      console.log("抓到資料:", data);
+      document.getElementById("temp").innerText = data.temp;
+      document.getElementById("hum").innerText  = data.hum;
       ledOn = data.led == 1;
       document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
-    }catch(e){
-      console.error("抓取資料失敗", e);
+    } catch(e) {
+      console.error(e);
     }
   }
 
   async function toggleLED(){
     ledOn = !ledOn;
-    try{
-      await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn ? 1 : 0}`);
-      document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
-    }catch(e){
-      console.error("切換 LED 失敗", e);
-    }
+    await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn ? 1 : 0}`);
+    document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
   }
 
   document.getElementById("ledBtn").addEventListener("click", toggleLED);
 
   fetchData();
-  setInterval(fetchData, 5000); // 每 5 秒更新
+  setInterval(fetchData, 5000);
 });
 </script>
 </body>
