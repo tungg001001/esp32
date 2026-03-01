@@ -1,99 +1,73 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>ESP32 DHT11 控制</title>
-<style>
-  body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; background: #f4f7f6; text-align: center; }
-  .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; }
-  h1 { color: #2c3e50; margin-bottom: 20px; }
-  p { font-size: 20px; color: #34495e; }
-  .value { font-weight: bold; color: #3498db; }
-  
-  /* 按鈕樣式 */
-  #ledBtn { 
-    padding: 12px 24px; font-size: 18px; cursor: pointer; border: none; border-radius: 8px;
-    transition: 0.3s; color: white; background-color: #95a5a6; margin-top: 15px;
-  }
-  .btn-on { background-color: #2ecc71 !important; }
-  .btn-off { background-color: #e74c3c !important; }
-</style>
+    <meta charset="UTF-8">
+    <title>ESP32 控制台</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #f0f0f0; }
+        .card { background: white; padding: 20px; display: inline-block; border-radius: 10px; shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .val { font-size: 24px; font-weight: bold; color: blue; }
+        #ledBtn { padding: 10px 20px; font-size: 18px; cursor: pointer; margin-top: 20px; }
+    </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>ESP32 監測面板</h1>
-  <p>🌡️ 溫度: <span id="temp" class="value">讀取中...</span> ℃</p>
-  <p>💧 濕度: <span id="hum" class="value">讀取中...</span> %</p>
-  <hr>
-  <button id="ledBtn">檢查連線中...</button>
-</div>
+    <div class="card">
+        <h1>ESP32 DHT11 控制頁面</h1>
+        <p>溫度: <span id="temp" class="val">--</span> ℃</p>
+        <p>濕度: <span id="hum" class="val">--</span> %</p>
+        <button id="ledBtn">讀取資料中...</button>
+        <p id="msg" style="color:red; font-size:12px;"></p>
+    </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-  // ⚠️ 請務必換成你「重新部署」後的網址
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwtAjS3gfASvGL1nRwmjhPmNFcRMu1LwvgBRe8485M-pwyPJHLWXiDfEbgwGWVb8SBz/exec"; 
-  let ledStatus = 0;
+    <script>
+        // 1. 這裡請務必更換為你「部署後」的完整網址
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwtAjS3gfASvGL1nRwmjhPmNFcRMu1LwvgBRe8485M-pwyPJHLWXiDfEbgwGWVb8SBz/exec"; 
 
-  const tempEl = document.getElementById("temp");
-  const humEl = document.getElementById("hum");
-  const btnEl = document.getElementById("ledBtn");
+        async function fetchData() {
+            const tempEl = document.getElementById("temp");
+            const humEl = document.getElementById("hum");
+            const btnEl = document.getElementById("ledBtn");
+            const msgEl = document.getElementById("msg");
 
-  // 取得資料
-  async function fetchData(){
-    try {
-      const res = await fetch(GAS_URL);
-      const data = await res.json();
-      
-      // 更新數值
-      tempEl.innerText = data.temp;
-      humEl.innerText = data.hum;
-      
-      // 更新按鈕狀態
-      ledStatus = data.led;
-      updateButtonUI(ledStatus);
-      
-    } catch(e) {
-      console.error("Fetch Error:", e);
-      btnEl.innerText = "連線失敗";
-    }
-  }
+            try {
+                const res = await fetch(GAS_URL);
+                if (!res.ok) throw new Error('網路回應不正確');
+                
+                const data = await res.json();
+                console.log("成功取得資料:", data);
 
-  // 更新按鈕外觀
-  function updateButtonUI(status) {
-    if(status == 1 || status == "1") {
-      btnEl.innerText = "💡 關閉 LED";
-      btnEl.className = "btn-on";
-    } else {
-      btnEl.innerText = "🌑 開啟 LED";
-      btnEl.className = "btn-off";
-    }
-  }
+                tempEl.innerText = data.temp;
+                humEl.innerText = data.hum;
+                btnEl.innerText = (data.led == 1) ? "關閉 LED" : "開啟 LED";
+                btnEl.style.backgroundColor = (data.led == 1) ? "#ffcccc" : "#ccffcc";
+                msgEl.innerText = ""; // 清除錯誤訊息
+            } catch (error) {
+                console.error("抓取失敗:", error);
+                msgEl.innerText = "連線失敗: " + error.message;
+            }
+        }
 
-  // 切換 LED
-  async function toggleLED(){
-    const nextState = (ledStatus == 1) ? 0 : 1;
-    btnEl.innerText = "傳送指令...";
-    
-    try {
-      // 傳送指令給 GAS，這裡故意傳 temp=0&hum=0 避免影響數據，或者你的 GAS 只要 led 參數也行
-      await fetch(`${GAS_URL}?led=${nextState}`);
-      
-      // 指令發送後，手動更新狀態，不等待下一次輪詢
-      ledStatus = nextState;
-      updateButtonUI(ledStatus);
-    } catch(e) {
-      alert("控制失敗，請確認網路或 GAS 權限");
-      fetchData(); // 失敗則刷回原本狀態
-    }
-  }
+        // 綁定按鈕點擊事件
+        document.getElementById("ledBtn").addEventListener("click", async () => {
+            const btn = document.getElementById("ledBtn");
+            const isOn = btn.innerText === "關閉 LED";
+            const nextState = isOn ? 0 : 1;
+            
+            btn.innerText = "傳送中...";
+            try {
+                await fetch(`${GAS_URL}?led=${nextState}`);
+                fetchData(); // 傳送完重新整理數值
+            } catch (e) {
+                alert("切換失敗");
+                fetchData();
+            }
+        });
 
-  btnEl.addEventListener("click", toggleLED);
-
-  // 初始化並設定定時更新
-  fetchData();
-  setInterval(fetchData, 5000); // 每 5 秒自動更新
-});
-</script>
+        // 啟動時先跑一次
+        fetchData();
+        // 每 5 秒自動更新
+        setInterval(fetchData, 5000);
+    </script>
 </body>
 </html>
