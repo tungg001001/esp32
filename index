@@ -7,25 +7,24 @@
 const GAS_URL = "https://script.google.com/macros/s/你的WebAppID/exec";
 let ledOn = false;
 
-async function fetchData() {
-  try {
+async function fetchData(){
+  try{
     const response = await fetch(GAS_URL);
     const data = await response.json();
-    console.log(data); // 偵錯用
-    // Sheet 空或沒資料時顯示 --
-    document.getElementById("temp").innerText = data.temp || "--";
-    document.getElementById("hum").innerText = data.hum || "--";
+    console.log(data);
+    document.getElementById("temp").innerText = data.temp !== undefined ? data.temp : "--";
+    document.getElementById("hum").innerText = data.hum !== undefined ? data.hum : "--";
     ledOn = data.led == 1;
     document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
-  } catch(e){ console.error(e); }
+  }catch(e){console.error(e);}
 }
 
-async function toggleLED() {
+async function toggleLED(){
   ledOn = !ledOn;
-  try {
-    await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn ? 1 : 0}`);
+  try{
+    await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn?1:0}`);
     document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
-  } catch(e){ console.error(e); }
+  }catch(e){console.error(e);}
 }
 
 document.getElementById("ledBtn").addEventListener("click", toggleLED);
