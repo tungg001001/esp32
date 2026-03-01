@@ -4,49 +4,83 @@
 <meta charset="UTF-8">
 <title>ESP32 DHT11 控制</title>
 <style>
-  body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; background: #f0f0f0; }
+  body { font-family: "Microsoft JhengHei", sans-serif; padding: 20px; background: #f0f8ff; text-align: center; }
+  .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: inline-block; min-width: 300px; }
   h1 { color: #007acc; }
-  p { font-size: 18px; }
-  button { padding: 10px 20px; font-size: 16px; margin-top: 10px; cursor: pointer; }
+  p { font-size: 20px; font-weight: bold; }
+  .value { color: #e67e22; font-size: 24px; }
+  
+  /* 按鈕樣式優化 */
+  button { 
+    padding: 12px 30px; font-size: 18px; margin-top: 20px; cursor: pointer; 
+    border: none; border-radius: 25px; transition: 0.3s; color: white;
+    background-color: #95a5a6; /* 預設灰色 */
+  }
+  button.on { background-color: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
+  button.off { background-color: #e74c3c; }
+  button:active { transform: scale(0.95); }
 </style>
 </head>
 <body>
-<h1>ESP32 DHT11 控制頁面</h1>
 
-<p>溫度: <span id="temp">--</span> ℃</p>
-<p>濕度: <span id="hum">--</span> %</p>
-<!-- 這個按鈕一定要有，id 與 JS 一致 -->
-<button id="ledBtn">開/關 LED</button>
+<div class="card">
+  <h1>智能家居控制台</h1>
+  <hr>
+  <p>🌡️ 溫度: <span id="temp" class="value">--</span> ℃</p>
+  <p>💧 濕度: <span id="hum" class="value">--</span> %</p>
+  <button id="ledBtn">讀取中...</button>
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
+  // 請確認您的 GAS 網址正確
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwtAjS3gfASvGL1nRwmjhPmNFcRMu1LwvgBRe8485M-pwyPJHLWXiDfEbgwGWVb8SBz/exec"; 
   let ledOn = false;
+  let isUpdating = false; // 防止切換中被 fetchData 覆蓋
+
+  const btn = document.getElementById("ledBtn");
 
   async function fetchData(){
-    try{
+    if(isUpdating) return; // 如果正在切換按鈕，先暫停自動獲取
+    try {
       const res = await fetch(GAS_URL);
       const data = await res.json();
       document.getElementById("temp").innerText = data.temp;
       document.getElementById("hum").innerText  = data.hum;
-      ledOn = data.led == 1;
-      document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
-    } catch(e){
-      console.error(e);
+      
+      ledOn = (data.led == 1);
+      updateBtnUI();
+    } catch(e) {
+      console.error("獲取資料失敗:", e);
     }
   }
 
-  async function toggleLED(){
-    ledOn = !ledOn;
-    await fetch(`${GAS_URL}?temp=0&hum=0&led=${ledOn ? 1 : 0}`);
-    document.getElementById("ledBtn").innerText = ledOn ? "關閉 LED" : "開啟 LED";
+  function updateBtnUI() {
+    btn.innerText = ledOn ? "💡 關閉 LED" : "🌑 開啟 LED";
+    btn.className = ledOn ? "on" : "off";
   }
 
-  // 綁定按鈕
-  document.getElementById("ledBtn").addEventListener("click", toggleLED);
+  async function toggleLED(){
+    isUpdating = true; // 鎖定狀態
+    ledOn = !ledOn;
+    updateBtnUI(); // 先更新畫面增加體感速度
+
+    try {
+      // 這裡假設你的 GAS 接收 GET 參數來存入試算表
+      await fetch(`${GAS_URL}?led=${ledOn ? 1 : 0}`);
+    } catch(e) {
+      console.error("發送指令失敗:", e);
+      ledOn = !ledOn; // 失敗時回退狀態
+      updateBtnUI();
+    } finally {
+      isUpdating = false; // 解鎖
+    }
+  }
+
+  btn.addEventListener("click", toggleLED);
 
   fetchData();
-  setInterval(fetchData, 5000);
+  setInterval(fetchData, 5000); // 5秒更新一次
 });
 </script>
 </body>
