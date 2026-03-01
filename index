@@ -12,7 +12,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbx55fVbV5XXSd6U35VcTnbdN5y28L0hVHZgonXHoICub8Yipmh81ZuM06d-Mm-zeRlUng/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwtAjS3gfASvGL1nRwmjhPmNFcRMu1LwvgBRe8485M-pwyPJHLWXiDfEbgwGWVb8SBz/exec";
   let ledOn = false;
 
   async function fetchData(){
