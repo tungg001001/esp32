@@ -20,7 +20,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", function(){
   // ← 替換成你部署後的 Web App URL
-  const GAS_URL = "https://script.google.com/macros/s/你的WebAppID/exec"; 
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwtAjS3gfASvGL1nRwmjhPmNFcRMu1LwvgBRe8485M-pwyPJHLWXiDfEbgwGWVb8SBz/exec"; 
 
   let ledOn = false;
 
