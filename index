@@ -4,7 +4,7 @@
 <button id="ledBtn">開/關 LED</button>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbywAzr5hl3GYWRE9KeF0wAcCfYxKZzNXXLv9apGkngHkSCKp1mI90z8QFG9Wq_CJGyZ/exec";
+const GAS_URL = "https://script.google.com/macros/s/你的WebAppID/exec";
 let ledOn = false;
 
 async function fetchData() {
@@ -12,6 +12,7 @@ async function fetchData() {
     const response = await fetch(GAS_URL);
     const data = await response.json();
     console.log(data); // 偵錯用
+    // Sheet 空或沒資料時顯示 --
     document.getElementById("temp").innerText = data.temp || "--";
     document.getElementById("hum").innerText = data.hum || "--";
     ledOn = data.led == 1;
