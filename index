@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 MQTT Web Dashboard</title>
+<title>ESP32 MQTT Web 監控</title>
 
 <!-- MQTT.js -->
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -14,19 +14,22 @@ body {
   color:#e5e7eb;
   text-align:center;
 }
+h1 { color:#38bdf8; }
 .card {
   background:#020617;
-  border-radius:12px;
+  border-radius:14px;
   padding:20px;
   margin:20px auto;
-  width:300px;
+  width:320px;
   box-shadow:0 0 20px #38bdf8;
 }
-h1 { color:#38bdf8; }
-.value { font-size:32px; margin:10px; }
+.value {
+  font-size:36px;
+  margin:10px;
+}
 button {
   font-size:18px;
-  padding:10px 25px;
+  padding:10px 28px;
   margin:10px;
   border:none;
   border-radius:8px;
@@ -34,11 +37,17 @@ button {
 }
 .on { background:#22c55e; }
 .off { background:#ef4444; }
+.status {
+  margin-top:10px;
+  font-size:18px;
+  color:#facc15;
+}
 </style>
 </head>
 
 <body>
-<h1>🌐 ESP32 遠端監控</h1>
+
+<h1>🌐 ESP32 遠端溫濕度監控</h1>
 
 <div class="card">
   <h2>🌡 溫度</h2>
@@ -50,13 +59,13 @@ button {
 
 <div class="card">
   <h2>💡 LED 控制</h2>
-  <button class="on" onclick="setLED('on')">ON</button>
-  <button class="off" onclick="setLED('off')">OFF</button>
-  <p>狀態：<span id="ledState">--</span></p>
+  <button class="on" onclick="setLED(1)">ON</button>
+  <button class="off" onclick="setLED(0)">OFF</button>
+  <div class="status">狀態：<span id="led">--</span></div>
 </div>
 
 <script>
-/* ===== MQTT WebSocket 設定 ===== */
+/* ========= MQTT WebSocket 設定 ========= */
 const broker = "wss://broker.hivemq.com:8884/mqtt";
 const options = {
   clientId: "web_" + Math.random().toString(16).substr(2, 8)
@@ -64,31 +73,33 @@ const options = {
 
 const client = mqtt.connect(broker, options);
 
-/* ===== MQTT 連線 ===== */
+/* ========= 連線成功 ========= */
 client.on("connect", () => {
-  console.log("MQTT 已連線");
-  client.subscribe("esp32/dht/#");
-  client.subscribe("esp32/led/state");
+  console.log("✅ MQTT 已連線");
+  client.subscribe("esp32/data");
 });
 
-/* ===== 接收資料 ===== */
+/* ========= 接收資料 ========= */
 client.on("message", (topic, message) => {
-  const data = message.toString();
+  console.log("📩", topic, message.toString());
 
-  if (topic === "esp32/dht/temp") {
-    document.getElementById("temp").innerText = data;
-  }
-  if (topic === "esp32/dht/hum") {
-    document.getElementById("hum").innerText = data;
-  }
-  if (topic === "esp32/led/state") {
-    document.getElementById("ledState").innerText = data.toUpperCase();
+  if (topic === "esp32/data") {
+    try {
+      const data = JSON.parse(message.toString());
+
+      document.getElementById("temp").innerText = data.temp ?? "--";
+      document.getElementById("hum").innerText  = data.hum ?? "--";
+      document.getElementById("led").innerText  = data.led == 1 ? "ON" : "OFF";
+
+    } catch (e) {
+      console.error("JSON 解析失敗", e);
+    }
   }
 });
 
-/* ===== LED 控制 ===== */
+/* ========= LED 控制 ========= */
 function setLED(state) {
-  client.publish("esp32/led/set", state);
+  client.publish("esp32/led/set", state.toString());
 }
 </script>
 
